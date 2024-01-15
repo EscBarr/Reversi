@@ -28,34 +28,33 @@ class AiBot:
         self.color = color
 
     def minmax_move(self, gameboard, max_depth):
-        score, x, y = self.minmax(gameboard, self.color, 3)
+        score, x, y = self.minmax(gameboard, self.color, 4)
         gameboard.calc_move_(x, y, self.color)
 
     def minmax(self, gameboard, color, depth):
-        if depth == 0:
+        if depth == 0: # Если глубина поиска достигла нуля, то функция возвращает оценку текущего состояния игровой доски для указанного цвета.
             return gameboard.get_score(color),
         legal_moves = gameboard.get_legal_moves(color)
-        if not legal_moves:
+        if not legal_moves: #Если не существует легальных ходов, функция также возвращает оценку текущего состояния игровой доски для указанного цвета.
             return gameboard.get_score(color),
-
         if color == self.color:  # Максимизируем для своего цвета
             best_score = -1000000
-            for x, y in legal_moves:
+            for x, y in legal_moves:#Проверяется каждый возможный ход. Если ход возможен, то рекурсивно вызывается self.minmax с обновленной доской, для инвертированного цвета, и с уменьшенной глубиной - 1.
                 if gameboard.calc_move_(x, y, color):
                     score = self.minmax(gameboard, color.inverse_color,
                                         depth - 1)[0]
-                    gameboard.undo_last()
+                    gameboard.undo_last()#Происходит отмена последнего хода, возвращение состояния доски
                     if score > best_score:
                         best_score, best_x, best_y = score, x, y
                 else:
                     return gameboard.get_score(color),
         else:  # Минимизируем для оппонента
             best_score = 1000000
-            for x, y in legal_moves:
+            for x, y in legal_moves:#Проверяется каждый возможный ход. Если ход возможен, то рекурсивно вызывается self.minmax с обновленной доской, для инвертированного цвета, и с уменьшенной глубиной - 1.
                 if gameboard.calc_move_(x, y, color):
                     score = self.minmax(gameboard, color.inverse_color,
                                         depth - 1)[0]
-                    gameboard.undo_last()
+                    gameboard.undo_last()#Происходит отмена последнего хода, возвращение состояния доски
                     if score < best_score:
                         best_score, best_x, best_y = score, x, y
                 else:
@@ -65,7 +64,7 @@ class AiBot:
 
 
 class GameField:
-    POSSIBLE_MOVES_DIRECTIONS = [(0, 1), (1, 1), (1, 0), (1, -1),
+    POSSIBLE_MOVES_DIRECTIONS = [(0, 1), (1, 1), (1, 0), (1, -1), #Для упрощения поиска возможных ходов, запишем пары всевозмоможных перемещений относительно точки
                                  (0, -1), (-1, -1), (-1, 0), (-1, 1)]
 
     def __init__(self):
@@ -115,7 +114,7 @@ class GameField:
 
         return score
 
-    def undo_last(self):
+    def undo_last(self):# После просчета хода происходит,(т.к рассчет ведется на 3-4 хода вперед, то это меняет игровую доску, и нам эти изменения нужно убрать)
         last_flips = self.flips.pop()
         last_x, last_y = self.moves.pop()
         self.Battlefield[last_x][last_y] = TileStatus.Empty
@@ -126,12 +125,12 @@ class GameField:
         return 0 <= x < 8 and 0 <= y < 8
 
     def _check_move_legality_(self, x, y):
-        # Check the bounds and whether the cell is not occupied
+        # Проверка границ и вообще занята ли клетка
         return (self._check_bounds(x, y) and
                 self.Battlefield[x][y] == TileStatus.Empty)
 
     def calc_move_(self, x, y, tiletype):
-        flips = self.check_move_(x, y, tiletype)
+        flips = self.check_move_(x, y, tiletype) # Проверка удалось ли перевернуть фишки оппонента
         if not flips:
             return None
 
@@ -151,20 +150,21 @@ class GameField:
         self.Battlefield[move_x][move_y] = tiletype
         flips = []
         for xdir, ydir in self.POSSIBLE_MOVES_DIRECTIONS:
-            x, y = move_x + xdir, move_y + ydir
-            if self._check_bounds(x, y) and self.Battlefield[x][y] == tiletype.inverse_color:
-                x, y = x + xdir, y + ydir
+            x, y = move_x + xdir, move_y + ydir #Вычисляем следующую позицию в указанном направлении.
+            if self._check_bounds(x, y) and self.Battlefield[x][y] == tiletype.inverse_color: #Проверяем, находится ли следующая позиция в пределах доски и содержит ли фишку противоположного цвета.
+                x, y = x + xdir, y + ydir #Перемещаемся дальше в том же направлении.
                 if not self._check_bounds(x, y):
-                    continue  # The for loop
+                    continue  # Цикл for
+                #Идем до конца линии фишек противоположного цвета в данном направлении.
                 while self._check_bounds(x, y) and self.Battlefield[x][y] == tiletype.inverse_color:
                     x, y = x + xdir, y + ydir
-                    if not self._check_bounds(x, y):
-                        break  # The while loop
+                    if not self._check_bounds(x, y): #Если дошли до конца доски, продолжаем цикл.
+                        break  # Цикл while
                 if not self._check_bounds(x, y):
-                    continue  # The for loop
+                    continue  # Цикл for
 
                 if self.Battlefield[x][y] == tiletype:
-
+                    #В этом случае, с помощью цикла while переворачиваем фишки на пути от начальной позиции до конечной, и их координаты добавляем в список
                     while True:
                         x, y = x - xdir, y - ydir
                         if x == move_x and y == move_y:
