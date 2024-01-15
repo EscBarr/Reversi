@@ -29,7 +29,7 @@ class AiBot:
 
     def minmax_move(self, gameboard, max_depth):
         score, x, y = self.minmax(gameboard, self.color, 4)
-        gameboard.calc_move_(x, y, self.color)
+        gameboard.calc_move_(x, y, self.color)#Применяем лучший ход
 
     def minmax(self, gameboard, color, depth):
         if depth == 0: # Если глубина поиска достигла нуля, то функция возвращает оценку текущего состояния игровой доски для указанного цвета.
@@ -100,7 +100,7 @@ class GameField:
                 if cell_value == 2:
                     print("\033[97m" + str(cell_value) + "\033[0m", end=' ')
                 elif cell_value == 1:
-                    print("\033[91m" + str(cell_value) + "\033[0m", end=' ')
+                    print("\033[91m" + str(cell_value) + "\033[0m", end=' ')#Черные отмечаются красным
                 else:
                     print(cell_value, end=' ')
             print()
@@ -229,7 +229,7 @@ class GameStatus:
                 self.MoveStatus = MoveStatus.StronkAI
             else:
                 if self.Board.get_legal_moves(self.AiBot.color):
-                    self.AiBot.minmax_move(self.Board, 3)
+                    self.AiBot.minmax_move(self.Board, 4)
                 self.MoveStatus = MoveStatus.Human
             self.Board.print_battlefield()
 
